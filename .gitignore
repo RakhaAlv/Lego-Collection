@@ -1,0 +1,19 @@
+# Folder skill / agentic / tooling lokal
+.agents/
+.agent/
+.cursor/
+.vscode/
+skills-lock.json
+
+# Artefak build & cache Flutter / Dart
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.iml
+
+# File sistem & sementara
+.DS_Store
+Thumbs.db
+*.log

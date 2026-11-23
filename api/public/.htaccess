@@ -1,0 +1,13 @@
+# Untuk hosting Apache: arahkan semua request non-file ke index.php
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+# Izinkan gambar dimuat lintas origin (Flutter Web) & cache browser 24 jam
+<IfModule mod_headers.c>
+    <FilesMatch "\.(png|jpe?g|webp)$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+</IfModule>
