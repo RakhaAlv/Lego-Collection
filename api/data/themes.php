@@ -1,80 +1,71 @@
 <?php
-/**
- * Seed data 6 Tema LEGO (Tugas Akhir PPB 2026).
- * Field image_url berisi path relatif ke file gambar asli di api/public/images/;
- * URL absolut dibangun oleh index.php berdasarkan host server PHP aktif.
- */
+// Data 6 tema LEGO; path gambar lokal dilengkapi menjadi URL absolut di index.php.
+
 return [
     [
         'id' => 1,
         'theme_name' => 'LEGO Marvel',
         'established_year' => 2012,
-        'target_audience' => 'Anak, Remaja & Dewasa (7+ hingga 18+)',
-        'difficulty_level' => 'Menengah - Tinggi',
+        'target_audience' => 'Ages 7+ to 18+',
+        'difficulty_level' => 'Intermediate to Advanced',
         'total_sets_released' => 250,
-        'characteristic' => 'Markas ikonik, helm kolektor, dan minifigure superhero Marvel Cinematic Universe.',
+        'characteristic' => 'Iconic headquarters, collector display pieces, and Marvel Super Heroes minifigures.',
         'image_url' => 'images/76269.png',
-        'overview' => 'LEGO Marvel membawa kisah para superhero Avengers, Spider-Man, dan Guardians of the Galaxy '
-            . 'ke dalam bentuk bangunan modular raksasa, mech, serta objek kolektor.',
+        'overview' => 'LEGO Marvel brings the Avengers, Spider-Man, and Guardians of the Galaxy to life through modular skyscrapers, display replicas, and action scenes.',
     ],
     [
         'id' => 2,
         'theme_name' => 'LEGO Disney',
         'established_year' => 2016,
-        'target_audience' => 'Semua Usia (4+ hingga 18+)',
-        'difficulty_level' => 'Rendah - Tinggi',
+        'target_audience' => 'All Ages (4+ to 18+)',
+        'difficulty_level' => 'Beginner to Advanced',
         'total_sets_released' => 150,
-        'characteristic' => 'Istana dongeng, pondok animasi klasik, dan karakter ikonik Disney & Pixar.',
+        'characteristic' => 'Fairytale castles, classic animated cottages, and beloved Disney & Pixar characters.',
         'image_url' => 'images/43222.webp',
-        'overview' => 'LEGO Disney merayakan keajaiban film animasi Disney dan Pixar melalui replika kastil megah, '
-            . 'adegan film favorit, serta karakter yang penuh detail nostalgia.',
+        'overview' => 'LEGO Disney celebrates classic and modern animated stories through grand collector castles, nostalgic dioramas, and expressive character builds.',
     ],
     [
         'id' => 3,
         'theme_name' => 'LEGO Harry Potter',
         'established_year' => 2001,
-        'target_audience' => 'Anak, Remaja & Dewasa (7+ hingga 18+)',
-        'difficulty_level' => 'Menengah - Tinggi',
+        'target_audience' => 'Ages 7+ to 18+',
+        'difficulty_level' => 'Intermediate to Advanced',
         'total_sets_released' => 170,
-        'characteristic' => 'Kastil Hogwarts, Diagon Alley, makhluk ajaib, dan dunia sihir penuh ruang rahasia.',
+        'characteristic' => 'Hogwarts Castle scenes, Diagon Alley shops, magical creatures, and hidden chambers.',
         'image_url' => 'images/76444.webp',
-        'overview' => 'LEGO Harry Potter menghadirkan kembali petualangan dunia sihir Wizarding World, '
-            . 'mulai dari kawasan Diagon Alley berskala kolektor hingga adegan ikonik di Hogwarts.',
+        'overview' => 'LEGO Harry Potter recreates the magic of the Wizarding World, from collector-scale Diagon Alley streets to iconic Hogwarts moments.',
     ],
     [
         'id' => 4,
         'theme_name' => 'LEGO NINJAGO',
         'established_year' => 2011,
-        'target_audience' => 'Anak & Remaja (6+ hingga 14+)',
-        'difficulty_level' => 'Menengah',
+        'target_audience' => 'Ages 6+ to 14+',
+        'difficulty_level' => 'Intermediate',
         'total_sets_released' => 450,
-        'characteristic' => 'Naga elemental, kuil turnamen, robot mech, motor ninja, dan kota bertingkat khas NINJAGO.',
+        'characteristic' => 'Elemental dragons, tournament temples, mechs, bikes, and multi-level NINJAGO City builds.',
         'image_url' => 'images/71837.webp',
-        'overview' => 'LEGO NINJAGO adalah tema orisinal LEGO yang memadukan aksi seni bela diri, fantasi naga, '
-            . 'dan arsitektur kota futuristik bersama tim ninja Lloyd, Kai, Jay, Cole, Zane, dan Nya.',
+        'overview' => 'LEGO NINJAGO blends martial-arts adventure, dragon fantasy, and futuristic modular architecture alongside Lloyd, Kai, Jay, Cole, Zane, and Nya.',
     ],
     [
         'id' => 5,
         'theme_name' => 'LEGO City',
         'established_year' => 2005,
-        'target_audience' => 'Anak & Keluarga (4+ hingga 8+)',
-        'difficulty_level' => 'Rendah - Menengah',
+        'target_audience' => 'Ages 4+ to 8+',
+        'difficulty_level' => 'Beginner to Intermediate',
         'total_sets_released' => 700,
-        'characteristic' => 'Kendaraan perkotaan realistis, truk balap F1, alat berat, kereta penumpang, dan eksplorasi antariksa.',
+        'characteristic' => 'Realistic city vehicles, Formula 1 transporters, construction machinery, trains, and space exploration.',
         'image_url' => 'images/60445.webp',
-        'overview' => 'LEGO City menggambarkan aktivitas kota dan petualangan modern dengan kendaraan balap, '
-            . 'alat konstruksi, transportasi kereta listrik, hingga pesawat ruang angkasa ramah anak.',
+        'overview' => 'LEGO City captures everyday heroes and modern engineering across racing trucks, heavy loaders, express passenger trains, and interstellar spacecraft.',
     ],
     [
         'id' => 6,
         'theme_name' => 'LEGO Star Wars',
         'established_year' => 1999,
-        'target_audience' => 'Anak, Remaja & Dewasa (6+ hingga 18+)',
-        'difficulty_level' => 'Menengah - Tinggi',
+        'target_audience' => 'Ages 6+ to 18+',
+        'difficulty_level' => 'Intermediate to Advanced',
         'total_sets_released' => 900,
-        'characteristic' => 'Pesawat luar angkasa ikonik, mech karakter, battle pack pasukan, dan seri kolektor.',
+        'characteristic' => 'Iconic starfighters, character mechs, trooper battle packs, and Starship Collection display models.',
         'image_url' => 'images/75375.webp',
-        'overview' => 'LEGO Star Wars adalah tema lisensi legendaris yang menghadirkan pesawat tempur seperti '
-            . 'Millennium Falcon, X-Wing, dan TIE Fighter dari galaksi Star Wars.',
+        'overview' => 'LEGO Star Wars delivers legendary starships and scenes from across the saga, including the Millennium Falcon, X-Wing, and Darth Vader TIE Fighter.',
     ],
 ];

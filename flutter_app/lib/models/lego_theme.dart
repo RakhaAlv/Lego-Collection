@@ -1,3 +1,6 @@
+import '../utils/currency_formatter.dart';
+
+// Model data 1 tema LEGO dari respons JSON /api/themes.
 class LegoTheme {
   final int id;
   final String themeName;
@@ -21,19 +24,17 @@ class LegoTheme {
     required this.overview,
   });
 
-  static int _toInt(dynamic v) => v is int ? v : int.tryParse('$v') ?? 0;
-
   factory LegoTheme.fromJson(Map<String, dynamic> json) {
     return LegoTheme(
-      id: _toInt(json['id']),
-      themeName: json['theme_name'] ?? '',
-      establishedYear: _toInt(json['established_year']),
-      targetAudience: json['target_audience'] ?? '',
-      difficultyLevel: json['difficulty_level'] ?? '',
-      totalSetsReleased: _toInt(json['total_sets_released']),
-      characteristic: json['characteristic'] ?? '',
-      imageUrl: json['image_url'] ?? '',
-      overview: json['overview'] ?? '',
+      id: CurrencyFormatter.parseInt(json['id']),
+      themeName: '${json['theme_name'] ?? ''}',
+      establishedYear: CurrencyFormatter.parseInt(json['established_year']),
+      targetAudience: '${json['target_audience'] ?? ''}',
+      difficultyLevel: '${json['difficulty_level'] ?? ''}',
+      totalSetsReleased: CurrencyFormatter.parseInt(json['total_sets_released']),
+      characteristic: '${json['characteristic'] ?? ''}',
+      imageUrl: '${json['image_url'] ?? ''}',
+      overview: '${json['overview'] ?? ''}',
     );
   }
 }

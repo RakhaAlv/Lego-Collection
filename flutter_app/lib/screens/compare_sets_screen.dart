@@ -5,19 +5,13 @@ import '../main.dart';
 import '../models/lego_set.dart';
 import '../services/api_service.dart';
 import '../utils/currency_formatter.dart';
-import '../widgets/lego_set_card.dart' show LegoAppBarTitle, LegoBadgePill, LegoNetworkImage;
-import 'set_detail_screen.dart';
+import '../widgets/lego_set_card.dart';
 
-/// Tab 2: Perbandingan 2 Set LEGO secara berdampingan.
 class CompareSetsScreen extends StatefulWidget {
   final ScrollController? scrollController;
   final ApiService? apiService;
 
-  const CompareSetsScreen({
-    super.key,
-    this.scrollController,
-    this.apiService,
-  });
+  const CompareSetsScreen({super.key, this.scrollController, this.apiService});
 
   @override
   State<CompareSetsScreen> createState() => _CompareSetsScreenState();
@@ -38,6 +32,7 @@ class _CompareSetsScreenState extends State<CompareSetsScreen> {
     _loadSets();
   }
 
+  // Muat daftar set dari API lalu set nilai default Set A dan Set B.
   Future<void> _loadSets() async {
     setState(() {
       _loading = true;
@@ -64,57 +59,42 @@ class _CompareSetsScreenState extends State<CompareSetsScreen> {
   }
 
   LegoSet? _findSet(int? id) {
-    if (id == null) return null;
-    for (final s in _sets) {
-      if (s.id == id) return s;
-    }
-    return _sets.isNotEmpty ? _sets.first : null;
+    if (id == null || _sets.isEmpty) return null;
+    return _sets.firstWhere((s) => s.id == id, orElse: () => _sets.first);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const LegoAppBarTitle(title: 'Bandingkan Set')),
+    final controller = widget.scrollController;
+    Widget content = Scaffold(
+      appBar: AppBar(title: const LegoAppBarTitle(title: 'COMPARE SETS')),
       body: _buildBody(context),
+    );
+    if (controller != null) {
+      content = PrimaryScrollController(controller: controller, child: content);
+    }
+    return Title(
+      color: LegoCatalogApp.legoYellow,
+      title: 'Compare | LEGO COLLECTION',
+      child: content,
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: LegoCatalogApp.legoRed),
-      );
-    }
+    if (_loading) return const LegoLoadingState();
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off, size: 64, color: LegoCatalogApp.legoRed),
-              const SizedBox(height: 12),
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: _loadSets,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Coba Lagi'),
-              ),
-            ],
-          ),
-        ),
-      );
+      return LegoErrorState(message: _error!, onRetry: _loadSets);
     }
 
     final setA = _findSet(_setAId);
     final setB = _findSet(_setBId);
     if (setA == null || setB == null) {
-      return const Center(child: Text('Belum ada data set untuk dibandingkan.'));
+      return const Center(child: Text('No sets available to compare.'));
     }
 
-    final perPieceA = setA.pieces > 0 ? (setA.priceIdr / setA.pieces).round() : 0;
-    final perPieceB = setB.pieces > 0 ? (setB.priceIdr / setB.pieces).round() : 0;
+    final perPieceA = setA.pricePerPiece;
+    final perPieceB = setB.pricePerPiece;
+    final bottomPad = MediaQuery.viewPaddingOf(context).bottom + 28;
 
     return RefreshIndicator(
       color: LegoCatalogApp.legoRed,
@@ -123,7 +103,7 @@ class _CompareSetsScreenState extends State<CompareSetsScreen> {
         controller: widget.scrollController,
         child: ListView(
           controller: widget.scrollController,
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad),
           children: [
             Center(
               child: ConstrainedBox(
@@ -133,25 +113,26 @@ class _CompareSetsScreenState extends State<CompareSetsScreen> {
                   children: [
                     Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Pilih 2 Set untuk Dibandingkan',
+                              'SELECT TWO SETS TO COMPARE',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
                                 color: LegoCatalogApp.textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             Row(
                               children: [
                                 Expanded(
                                   child: _SetSelectorDropdown(
                                     key: const ValueKey('compare-dropdown-a'),
-                                    label: 'Set A',
+                                    label: 'SET A',
                                     value: setA.id,
                                     sets: _sets,
                                     onChanged: (id) {
@@ -161,11 +142,11 @@ class _CompareSetsScreenState extends State<CompareSetsScreen> {
                                     },
                                   ),
                                 ),
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: _SetSelectorDropdown(
                                     key: const ValueKey('compare-dropdown-b'),
-                                    label: 'Set B',
+                                    label: 'SET B',
                                     value: setB.id,
                                     sets: _sets,
                                     onChanged: (id) {
@@ -181,89 +162,110 @@ class _CompareSetsScreenState extends State<CompareSetsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
+
                     Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: _CompareSetHeader(
-                                  slotLabel: 'Set A',
-                                  legoSet: setA,
-                                ),
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _CompareSetHeader(
+                                slotLabel: 'SET A',
+                                legoSet: setA,
                               ),
-                              const VerticalDivider(width: 20),
-                              Expanded(
-                                child: _CompareSetHeader(
-                                  slotLabel: 'Set B',
-                                  legoSet: setB,
-                                ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _CompareSetHeader(
+                                slotLabel: 'SET B',
+                                legoSet: setB,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
+
                     Card(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
                         child: Column(
                           children: [
                             _CompareMetricRow(
-                              label: 'Nomor Set',
-                              valueA: '#${setA.setNumber}',
-                              valueB: '#${setB.setNumber}',
+                              label: 'Set Number',
+                              valueA: '#${setA.setNumber.orPlaceholder()}',
+                              valueB: '#${setB.setNumber.orPlaceholder()}',
                             ),
                             const Divider(),
                             _CompareMetricRow(
-                              label: 'Tema',
-                              valueA: setA.theme,
-                              valueB: setB.theme,
+                              label: 'Theme',
+                              valueA: setA.theme.orPlaceholder(),
+                              valueB: setB.theme.orPlaceholder(),
                             ),
                             const Divider(),
                             _CompareMetricRow(
-                              label: 'Harga',
+                              label: 'Price',
                               valueA: CurrencyFormatter.toRupiah(setA.priceIdr),
                               valueB: CurrencyFormatter.toRupiah(setB.priceIdr),
                               highlightValue: true,
-                              badgeA: setA.priceIdr < setB.priceIdr ? 'Lebih Hemat' : null,
-                              badgeB: setB.priceIdr < setA.priceIdr ? 'Lebih Hemat' : null,
-                              greenBadge: true,
-                            ),
-                            const Divider(),
-                            _CompareMetricRow(
-                              label: 'Jumlah Keping',
-                              valueA: '${CurrencyFormatter.thousands(setA.pieces)} pcs',
-                              valueB: '${CurrencyFormatter.thousands(setB.pieces)} pcs',
-                              badgeA: setA.pieces > setB.pieces ? 'Lebih Banyak' : null,
-                              badgeB: setB.pieces > setA.pieces ? 'Lebih Banyak' : null,
-                            ),
-                            const Divider(),
-                            _CompareMetricRow(
-                              label: 'Harga / Keping',
-                              valueA: '${CurrencyFormatter.toRupiah(perPieceA)} / pcs',
-                              valueB: '${CurrencyFormatter.toRupiah(perPieceB)} / pcs',
-                              badgeA: perPieceA > 0 && perPieceB > 0 && perPieceA < perPieceB
-                                  ? 'Lebih Hemat'
+                              badgeA: setA.priceIdr < setB.priceIdr
+                                  ? 'BEST VALUE'
                                   : null,
-                              badgeB: perPieceA > 0 && perPieceB > 0 && perPieceB < perPieceA
-                                  ? 'Lebih Hemat'
+                              badgeB: setB.priceIdr < setA.priceIdr
+                                  ? 'BEST VALUE'
                                   : null,
                               greenBadge: true,
                             ),
                             const Divider(),
                             _CompareMetricRow(
-                              label: 'Rating Usia',
-                              valueA: setA.ageRating,
-                              valueB: setB.ageRating,
+                              label: 'Pieces',
+                              valueA:
+                                  '${CurrencyFormatter.thousands(setA.pieces)} pcs',
+                              valueB:
+                                  '${CurrencyFormatter.thousands(setB.pieces)} pcs',
+                              badgeA: setA.pieces > setB.pieces
+                                  ? 'MORE PIECES'
+                                  : null,
+                              badgeB: setB.pieces > setA.pieces
+                                  ? 'MORE PIECES'
+                                  : null,
                             ),
                             const Divider(),
                             _CompareMetricRow(
-                              label: 'Tahun Rilis',
+                              label: 'Price / Piece',
+                              valueA:
+                                  '${CurrencyFormatter.toRupiah(perPieceA)} / pcs',
+                              valueB:
+                                  '${CurrencyFormatter.toRupiah(perPieceB)} / pcs',
+                              badgeA:
+                                  perPieceA > 0 &&
+                                      perPieceB > 0 &&
+                                      perPieceA < perPieceB
+                                  ? 'BEST VALUE'
+                                  : null,
+                              badgeB:
+                                  perPieceA > 0 &&
+                                      perPieceB > 0 &&
+                                      perPieceB < perPieceA
+                                  ? 'BEST VALUE'
+                                  : null,
+                              greenBadge: true,
+                            ),
+                            const Divider(),
+                            _CompareMetricRow(
+                              label: 'Age Rating',
+                              valueA: setA.ageRating.orPlaceholder(),
+                              valueB: setB.ageRating.orPlaceholder(),
+                            ),
+                            const Divider(),
+                            _CompareMetricRow(
+                              label: 'Release Year',
                               valueA: '${setA.releaseYear}',
                               valueB: '${setB.releaseYear}',
                             ),
@@ -301,28 +303,19 @@ class _SetSelectorDropdown extends StatelessWidget {
     return DropdownButtonFormField<int>(
       initialValue: value,
       isExpanded: true,
+      dropdownColor: Colors.white,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
           color: LegoCatalogApp.textPrimary,
         ),
-        filled: true,
-        fillColor: LegoCatalogApp.backgroundLight,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: LegoCatalogApp.borderLight),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: LegoCatalogApp.borderLight),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: LegoCatalogApp.legoRed, width: 1.5),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 11,
         ),
       ),
       items: sets
@@ -330,10 +323,13 @@ class _SetSelectorDropdown extends StatelessWidget {
             (s) => DropdownMenuItem<int>(
               value: s.id,
               child: Text(
-                '#${s.setNumber} - ${s.name}',
+                '#${s.setNumber} · ${s.name}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, color: LegoCatalogApp.textPrimary),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: LegoCatalogApp.textPrimary,
+                ),
               ),
             ),
           )
@@ -351,12 +347,17 @@ class _CompareSetHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AspectRatio(
           aspectRatio: 1,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: LegoCatalogApp.borderLight),
+            ),
+            padding: const EdgeInsets.all(14),
             child: LegoNetworkImage(
               url: legoSet.imageUrl,
               fit: BoxFit.contain,
@@ -366,51 +367,64 @@ class _CompareSetHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 6,
-          runSpacing: 4,
+          runSpacing: 6,
           children: [
             LegoBadgePill(
-              text: '$slotLabel • #${legoSet.setNumber}',
-              backgroundColor: LegoCatalogApp.legoYellowTint,
+              text: '$slotLabel · #${legoSet.setNumber.orPlaceholder()}',
+              backgroundColor: LegoCatalogApp.legoRed,
+              textColor: Colors.white,
+            ),
+            LegoBadgePill(
+              text: 'AGE ${legoSet.ageRating.orPlaceholder()}',
+              backgroundColor: LegoCatalogApp.legoYellow,
               textColor: LegoCatalogApp.textPrimary,
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          legoSet.name,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: LegoCatalogApp.textPrimary,
-            height: 1.25,
+        const SizedBox(height: 8),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 38),
+          child: Text(
+            legoSet.name.orPlaceholder().toUpperCase(),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+              color: LegoCatalogApp.textPrimary,
+              height: 1.3,
+            ),
           ),
         ),
-        const Spacer(),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         Align(
           alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SetDetailScreen(setId: legoSet.id, initialSet: legoSet),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => openSetDetail(context, legoSet),
+            child: Container(
+              padding: const EdgeInsets.only(bottom: 3),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: LegoCatalogApp.textPrimary,
+                    width: 1.2,
+                  ),
+                ),
               ),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: LegoCatalogApp.legoRed,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            icon: const Icon(Icons.open_in_new_rounded, size: 15),
-            label: const Text(
-              'Lihat Detail',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+              child: const Text(
+                'VIEW DETAILS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: LegoCatalogApp.textPrimary,
+                ),
+              ),
             ),
           ),
         ),
@@ -439,8 +453,12 @@ class _CompareMetricRow extends StatelessWidget {
   });
 
   Widget _cell(String value, String? badge) {
-    final bgColor = greenBadge ? const Color(0xFFE6F4EA) : LegoCatalogApp.legoYellowTint;
-    final fgColor = greenBadge ? const Color(0xFF1E7E34) : LegoCatalogApp.textPrimary;
+    final bgColor = greenBadge
+        ? const Color(0xFFE6F4EA)
+        : LegoCatalogApp.legoYellow;
+    final fgColor = greenBadge
+        ? const Color(0xFF1E7E34)
+        : LegoCatalogApp.textPrimary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,11 +468,14 @@ class _CompareMetricRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: highlightValue ? LegoCatalogApp.legoRed : LegoCatalogApp.textPrimary,
+            color: highlightValue
+                ? LegoCatalogApp.legoRed
+                : LegoCatalogApp.textPrimary,
+            fontFeatures: LegoCatalogApp.tabularNums,
           ),
         ),
         if (badge != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           LegoBadgePill(
             text: badge,
             backgroundColor: bgColor,
@@ -468,15 +489,16 @@ class _CompareMetricRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
               color: LegoCatalogApp.textSecondary,
             ),
           ),
@@ -485,7 +507,7 @@ class _CompareMetricRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _cell(valueA, badgeA)),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(child: _cell(valueB, badgeB)),
             ],
           ),

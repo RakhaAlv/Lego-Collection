@@ -5,34 +5,28 @@ import '../main.dart';
 import '../services/wishlist_store.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/lego_set_card.dart';
-import 'set_detail_screen.dart';
 
-/// Tab 4: daftar Set LEGO favorit yang disimpan pengguna ke Wishlist.
+// Halaman daftar set favorit yang tersimpan di WishlistStore.
 class WishlistScreen extends StatelessWidget {
   final ScrollController? scrollController;
   final VoidCallback? onExploreSets;
 
-  const WishlistScreen({
-    super.key,
-    this.scrollController,
-    this.onExploreSets,
-  });
+  const WishlistScreen({super.key, this.scrollController, this.onExploreSets});
 
   @override
   Widget build(BuildContext context) {
     final store = WishlistStore.instance;
+    final bottomPad = MediaQuery.viewPaddingOf(context).bottom + 20;
 
-    return Scaffold(
+    Widget content = Scaffold(
       appBar: AppBar(
-        title: const LegoAppBarTitle(title: 'Wishlist Koleksi'),
+        title: const LegoAppBarTitle(title: 'WISHLIST'),
         actions: [
           ListenableBuilder(
             listenable: store,
             builder: (context, _) {
               if (store.isEmpty) return const SizedBox.shrink();
-              return IconButton(
-                tooltip: 'Kosongkan Wishlist',
-                icon: const Icon(Icons.delete_outline_rounded),
+              return TextButton(
                 onPressed: () {
                   HapticFeedback.selectionClick();
                   store.clear();
@@ -40,11 +34,23 @@ class WishlistScreen extends StatelessWidget {
                     ..hideCurrentSnackBar()
                     ..showSnackBar(
                       const SnackBar(
-                        content: Text('Semua set di Wishlist dihapus'),
+                        content: Text('All saved sets removed from Wishlist'),
                         duration: Duration(seconds: 2),
                       ),
                     );
                 },
+                style: TextButton.styleFrom(
+                  foregroundColor: LegoCatalogApp.legoRed,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                child: const Text(
+                  'CLEAR ALL',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.3,
+                  ),
+                ),
               );
             },
           ),
@@ -57,49 +63,49 @@ class WishlistScreen extends StatelessWidget {
           if (items.isEmpty) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(28),
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 76,
-                      height: 76,
+                      width: 64,
+                      height: 64,
                       decoration: BoxDecoration(
-                        color: LegoCatalogApp.legoYellowTint,
-                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.white,
+                        border: Border.all(color: LegoCatalogApp.borderLight),
                       ),
                       child: const Icon(
-                        Icons.favorite_border_rounded,
-                        size: 40,
-                        color: LegoCatalogApp.legoRed,
+                        Icons.favorite_border_sharp,
+                        size: 28,
+                        color: LegoCatalogApp.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     const Text(
-                      'Wishlist Masih Kosong',
+                      'YOUR WISHLIST IS EMPTY',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
                         color: LegoCatalogApp.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Tekan ikon hati pada kartu atau halaman detail set LEGO '
-                      'untuk menyimpannya ke daftar koleksi impianmu.',
+                      'Tap the heart icon on any LEGO set in the catalog '
+                      'to save your favorite builds here.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 13,
                         color: LegoCatalogApp.textSecondary,
-                        height: 1.45,
+                        height: 1.55,
                       ),
                     ),
                     if (onExploreSets != null) ...[
-                      const SizedBox(height: 18),
-                      FilledButton.icon(
+                      const SizedBox(height: 22),
+                      FilledButton(
                         onPressed: onExploreSets,
-                        icon: const Icon(Icons.widgets_outlined),
-                        label: const Text('Jelajahi Katalog Set'),
+                        child: const Text('EXPLORE CATALOG'),
                       ),
                     ],
                   ],
@@ -110,53 +116,45 @@ class WishlistScreen extends StatelessWidget {
 
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: LegoCatalogApp.legoYellowTint,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.favorite_rounded,
-                            color: LegoCatalogApp.legoRed,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${items.length} Set Disimpan',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                  color: LegoCatalogApp.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Estimasi total: ${CurrencyFormatter.toRupiah(store.totalPriceIdr)}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: LegoCatalogApp.legoRed,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: LegoCatalogApp.borderLight),
                   ),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      '${items.length} ${items.length == 1 ? 'SAVED SET' : 'SAVED SETS'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11.5,
+                        letterSpacing: 1.3,
+                        color: LegoCatalogApp.textPrimary,
+                        fontFeatures: LegoCatalogApp.tabularNums,
+                      ),
+                    ),
+                    Text(
+                      'ESTIMATED TOTAL: ${CurrencyFormatter.toRupiah(store.totalPriceIdr)}',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        color: LegoCatalogApp.legoRed,
+                        fontFeatures: LegoCatalogApp.tabularNums,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
@@ -164,22 +162,16 @@ class WishlistScreen extends StatelessWidget {
                   controller: scrollController,
                   child: ListView.builder(
                     controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
-                    itemExtent: 170,
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad),
+                    itemExtent: 158,
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final setItem = items[index];
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.only(bottom: 12),
                         child: LegoSetCard(
                           legoSet: setItem,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  SetDetailScreen(setId: setItem.id, initialSet: setItem),
-                            ),
-                          ),
+                          onTap: () => openSetDetail(context, setItem),
                         ),
                       );
                     },
@@ -190,6 +182,18 @@ class WishlistScreen extends StatelessWidget {
           );
         },
       ),
+    );
+
+    if (scrollController != null) {
+      content = PrimaryScrollController(
+        controller: scrollController!,
+        child: content,
+      );
+    }
+    return Title(
+      color: LegoCatalogApp.legoYellow,
+      title: 'Wishlist | LEGO COLLECTION',
+      child: content,
     );
   }
 }

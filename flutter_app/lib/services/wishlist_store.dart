@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/lego_set.dart';
 
-/// Penyimpanan state Wishlist lokal selama sesi aplikasi berjalan.
+// Singleton + ChangeNotifier agar state Wishlist otomatis sinkron di semua layar & navbar.
 class WishlistStore extends ChangeNotifier {
   WishlistStore._();
 
@@ -12,16 +12,12 @@ class WishlistStore extends ChangeNotifier {
   final Map<int, LegoSet> _items = {};
 
   List<LegoSet> get items => _items.values.toList(growable: false);
-
   int get count => _items.length;
-
   bool get isEmpty => _items.isEmpty;
-
   int get totalPriceIdr => _items.values.fold(0, (sum, set) => sum + set.priceIdr);
-
   bool contains(int id) => _items.containsKey(id);
 
-  /// Mengembalikan `true` jika set ditambahkan ke wishlist, `false` jika dihapus.
+  // Tambah/hapus set dari Wishlist; return true jika baru ditambahkan.
   bool toggle(LegoSet set) {
     final added = !_items.containsKey(set.id);
     if (added) {
@@ -31,12 +27,6 @@ class WishlistStore extends ChangeNotifier {
     }
     notifyListeners();
     return added;
-  }
-
-  void remove(int id) {
-    if (_items.remove(id) != null) {
-      notifyListeners();
-    }
   }
 
   void clear() {

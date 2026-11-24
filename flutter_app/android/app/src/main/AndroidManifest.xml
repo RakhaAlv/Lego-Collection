@@ -2,7 +2,7 @@
     <!-- Wajib agar APK release dapat mengakses API melalui jaringan -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="LEGO Catalog"
+        android:label="LEGO COLLECTION"
         android:usesCleartextTraffic="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

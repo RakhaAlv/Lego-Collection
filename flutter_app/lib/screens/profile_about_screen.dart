@@ -1,175 +1,205 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
-import '../widgets/lego_set_card.dart' show LegoAppBarTitle, LegoBadgePill;
+import '../widgets/lego_set_card.dart' show LegoAppBarTitle, LegoNetworkImage;
 
-/// Tab 5: Profil pengembang & informasi ringkas aplikasi.
 class ProfileAboutScreen extends StatelessWidget {
   final ScrollController? scrollController;
 
   const ProfileAboutScreen({super.key, this.scrollController});
 
   static const String appVersion = '1.0.0';
+  static const String profileAvatarUrl =
+      'https://www.brickifyme.com/roy-lego-profile.png';
 
-  Widget _tile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    bool isThreeLine = false,
-  }) {
-    return ListTile(
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: LegoCatalogApp.legoYellowTint,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 20, color: LegoCatalogApp.legoRed),
+  Widget _row({required String label, required String value}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.5,
+              color: LegoCatalogApp.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w600,
+              color: LegoCatalogApp.textPrimary,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 13,
-          color: LegoCatalogApp.textSecondary,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(
-          fontSize: 14.5,
-          color: LegoCatalogApp.textPrimary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      isThreeLine: isThreeLine,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final bottomPad = MediaQuery.viewPaddingOf(context).bottom + 28;
 
-    return Scaffold(
-      appBar: AppBar(title: const LegoAppBarTitle(title: 'Profile & About')),
+    Widget content = Scaffold(
+      appBar: AppBar(title: const LegoAppBarTitle(title: 'PROFILE')),
       body: Scrollbar(
         controller: scrollController,
         child: ListView(
           controller: scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPad),
           children: [
-            Card(
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  Container(height: 8, color: LegoCatalogApp.legoYellow),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        const CircleAvatar(
-                          radius: 42,
-                          backgroundColor: LegoCatalogApp.legoRed,
-                          child: Text(
-                            'RA',
-                            style: TextStyle(
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: LegoCatalogApp.textPrimary,
+                        border: Border(
+                          top: BorderSide(
+                            color: LegoCatalogApp.legoYellow,
+                            width: 4,
+                          ),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 32,
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 88,
+                            height: 88,
+                            decoration: BoxDecoration(
                               color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
+                              border: Border.all(
+                                color: LegoCatalogApp.legoYellow,
+                                width: 2.5,
+                              ),
+                            ),
+                            child: const LegoNetworkImage(
+                              url: profileAvatarUrl,
+                              fit: BoxFit.cover,
+                              cacheWidth: 260,
+                              cacheHeight: 260,
+                              filterQuality: FilterQuality.medium,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Rakha Aljiva Prabaswara',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: LegoCatalogApp.textPrimary,
+                          const SizedBox(height: 16),
+                          const Text(
+                            'RAKHA ALJIVA PRABASWARA',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.4,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        const LegoBadgePill(
-                          icon: Icons.verified_outlined,
-                          text: 'Pengembang Aplikasi',
-                          backgroundColor: LegoCatalogApp.legoYellowTint,
-                          textColor: LegoCatalogApp.textPrimary,
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          const Text(
+                            'LEGO INSIDERS',
+                            style: TextStyle(
+                              color: LegoCatalogApp.legoYellow,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Column(
-                children: [
-                  _tile(
-                    icon: Icons.person_outline,
-                    title: 'Nama',
-                    subtitle: 'Rakha Aljiva Prabaswara',
-                  ),
-                  const Divider(),
-                  _tile(
-                    icon: Icons.badge_outlined,
-                    title: 'NIM',
-                    subtitle: '21120124140126',
-                  ),
-                  const Divider(),
-                  _tile(
-                    icon: Icons.groups_outlined,
-                    title: 'Kelompok / Shift',
-                    subtitle: 'Kelompok 9 / Shift 02',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            const Padding(
-              padding: EdgeInsets.only(left: 4, bottom: 8),
-              child: Text(
-                'Tentang Aplikasi',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: LegoCatalogApp.textPrimary,
+                    const SizedBox(height: 20),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: LegoCatalogApp.borderLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _row(
+                            label: 'FULL NAME',
+                            value: 'Rakha Aljiva Prabaswara',
+                          ),
+                          const Divider(),
+                          _row(label: 'NIM', value: '21120124140126'),
+                          const Divider(),
+                          _row(label: 'MEMBERSHIP', value: 'LEGO Insiders'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    const Text(
+                      'ABOUT LEGO COLLECTION',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.6,
+                        color: LegoCatalogApp.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: LegoCatalogApp.borderLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _row(
+                            label: 'LEGO COLLECTION CATALOG',
+                            value:
+                                'An interactive catalog curated for exploring iconic LEGO '
+                                'collections across six official themes, comparing two sets '
+                                'side by side, and saving favorite builds to your Wishlist.',
+                          ),
+                          const Divider(),
+                          _row(label: 'APP VERSION', value: appVersion),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '© 2026 Rakha Aljiva Prabaswara\nLEGO® is a trademark of the LEGO Group.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: LegoCatalogApp.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            Card(
-              child: Column(
-                children: [
-                  _tile(
-                    icon: Icons.widgets_outlined,
-                    title: 'Aplikasi Katalog Koleksi Set LEGO',
-                    subtitle:
-                        'Katalog interaktif untuk menjelajahi koleksi set LEGO, mencari dan '
-                        'memfilter tema, membandingkan 2 set secara langsung, serta menyimpan daftar '
-                        'Wishlist.',
-                    isThreeLine: true,
-                  ),
-                  const Divider(),
-                  _tile(
-                    icon: Icons.info_outline,
-                    title: 'Versi Aplikasi',
-                    subtitle: appVersion,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            const Center(
-              child: Text(
-                '© 2026 Rakha Aljiva Prabaswara\nLEGO® adalah merek dagang milik LEGO Group.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: LegoCatalogApp.textSecondary, height: 1.4),
               ),
             ),
           ],
         ),
       ),
+    );
+
+    if (scrollController != null) {
+      content = PrimaryScrollController(
+        controller: scrollController!,
+        child: content,
+      );
+    }
+    return Title(
+      color: LegoCatalogApp.legoYellow,
+      title: 'Profile | LEGO COLLECTION',
+      child: content,
     );
   }
 }

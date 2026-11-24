@@ -1,3 +1,6 @@
+import '../utils/currency_formatter.dart';
+
+// Model data 1 set LEGO dari respons JSON /api/sets.
 class LegoSet {
   final int id;
   final int themeId;
@@ -27,22 +30,23 @@ class LegoSet {
     required this.description,
   });
 
-  static int _toInt(dynamic v) => v is int ? v : int.tryParse('$v') ?? 0;
+  // Rasio harga per pcs untuk indikator Best Value di halaman Compare.
+  int get pricePerPiece => pieces > 0 ? (priceIdr / pieces).round() : 0;
 
   factory LegoSet.fromJson(Map<String, dynamic> json) {
     return LegoSet(
-      id: _toInt(json['id']),
-      themeId: _toInt(json['theme_id']),
+      id: CurrencyFormatter.parseInt(json['id']),
+      themeId: CurrencyFormatter.parseInt(json['theme_id']),
       setNumber: '${json['set_number'] ?? ''}',
-      name: json['name'] ?? '',
-      theme: json['theme'] ?? '',
-      pieces: _toInt(json['pieces']),
-      ageRating: json['age_rating'] ?? '',
-      releaseYear: _toInt(json['release_year']),
-      dimensions: json['dimensions'] ?? '',
-      priceIdr: _toInt(json['price_idr']),
-      imageUrl: json['image_url'] ?? '',
-      description: json['description'] ?? '',
+      name: '${json['name'] ?? ''}',
+      theme: '${json['theme'] ?? ''}',
+      pieces: CurrencyFormatter.parseInt(json['pieces']),
+      ageRating: '${json['age_rating'] ?? ''}',
+      releaseYear: CurrencyFormatter.parseInt(json['release_year']),
+      dimensions: '${json['dimensions'] ?? ''}',
+      priceIdr: CurrencyFormatter.parseInt(json['price_idr']),
+      imageUrl: '${json['image_url'] ?? ''}',
+      description: '${json['description'] ?? ''}',
     );
   }
 }

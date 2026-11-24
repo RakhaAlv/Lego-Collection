@@ -15,12 +15,13 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-/// Service untuk mengambil data dari REST API PHP menggunakan package `http`.
+// Client HTTP untuk mengambil data JSON dari REST API PHP.
 class ApiService {
   final http.Client _client;
 
   ApiService({http.Client? client}) : _client = client ?? http.Client();
 
+  // Request GET tunggal yang mengecek status HTTP 200 dan mengambil field `data`.
   Future<dynamic> _get(String url) async {
     try {
       final response = await _client
@@ -32,15 +33,17 @@ class ApiService {
       if (response.statusCode == 200 && body['status'] == 'success') {
         return body['data'];
       }
-      throw ApiException(body['message'] ?? 'Terjadi kesalahan (HTTP ${response.statusCode})');
+      throw ApiException(
+        '${body['message'] ?? 'Request failed (HTTP ${response.statusCode})'}',
+      );
     } on TimeoutException {
-      throw const ApiException('Koneksi ke server timeout. Periksa Base URL & server API.');
+      throw const ApiException('Connection timed out. Please verify the API server.');
     } on FormatException {
-      throw const ApiException('Format respons server tidak valid.');
+      throw const ApiException('Invalid JSON response from server.');
     } on http.ClientException {
-      // SocketException dibungkus menjadi ClientException oleh package http.
       throw const ApiException(
-          'Tidak dapat terhubung ke server. Pastikan API PHP berjalan & Base URL benar.');
+        'Unable to connect to the API server. Make sure PHP server is running.',
+      );
     }
   }
 
@@ -60,10 +63,5 @@ class ApiService {
   Future<List<LegoTheme>> fetchThemes() async {
     final data = await _get(ApiConfig.themesEndpoint) as List<dynamic>;
     return data.map((e) => LegoTheme.fromJson(e as Map<String, dynamic>)).toList();
-  }
-
-  Future<LegoTheme> fetchThemeById(int id) async {
-    final data = await _get('${ApiConfig.themesEndpoint}/$id');
-    return LegoTheme.fromJson(data as Map<String, dynamic>);
   }
 }

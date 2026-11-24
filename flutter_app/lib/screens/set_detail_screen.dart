@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../main.dart';
 import '../models/lego_set.dart';
@@ -8,32 +7,35 @@ import '../services/wishlist_store.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/lego_set_card.dart';
 
-/// Halaman detail Set LEGO, mengambil data dari GET /api/sets/{id}
-/// serta set terkait dari GET /api/sets?theme_id={themeId}.
-/// Responsif 2 kolom saat lebar layar >= 720px, dan bertumpuk rapi di layar sempit.
 class SetDetailScreen extends StatefulWidget {
   final int setId;
-
-  /// Data awal dari list (opsional) untuk judul awal di AppBar.
   final LegoSet? initialSet;
+  final ApiService? apiService;
 
-  const SetDetailScreen({super.key, required this.setId, this.initialSet});
+  const SetDetailScreen({
+    super.key,
+    required this.setId,
+    this.initialSet,
+    this.apiService,
+  });
 
   @override
   State<SetDetailScreen> createState() => _SetDetailScreenState();
 }
 
 class _SetDetailScreenState extends State<SetDetailScreen> {
-  final ApiService _api = ApiService();
+  late final ApiService _api;
   late Future<LegoSet> _futureSet;
   late Future<List<LegoSet>> _futureRelated;
 
   @override
   void initState() {
     super.initState();
+    _api = widget.apiService ?? ApiService();
     _loadData();
   }
 
+  // Muat detail set dan daftar set terkait di tema yang sama.
   void _loadData() {
     _futureSet = _api.fetchSetById(widget.setId);
     _futureRelated = _fetchRelated();
@@ -45,8 +47,6 @@ class _SetDetailScreenState extends State<SetDetailScreen> {
     return list.where((s) => s.id != widget.setId).toList();
   }
 
-  void _retry() => setState(_loadData);
-
   @override
   Widget build(BuildContext context) {
     final wishlist = WishlistStore.instance;
@@ -55,45 +55,45 @@ class _SetDetailScreenState extends State<SetDetailScreen> {
       future: _futureSet,
       builder: (context, snapshot) {
         final legoSet = snapshot.data ?? widget.initialSet;
-        final title = legoSet?.name ?? 'Detail Set';
+        final title = legoSet?.name.orPlaceholder('Set Detail') ?? 'Set Detail';
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            actions: [
-              if (legoSet != null)
-                ListenableBuilder(
-                  listenable: wishlist,
-                  builder: (context, _) {
-                    final saved = wishlist.contains(legoSet.id);
-                    return IconButton(
-                      tooltip: saved ? 'Hapus dari Wishlist' : 'Simpan ke Wishlist',
-                      icon: Icon(
-                        saved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: saved ? LegoCatalogApp.legoRed : LegoCatalogApp.textPrimary,
-                      ),
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        final added = wishlist.toggle(legoSet);
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                added
-                                    ? '${legoSet.name} ditambahkan ke Wishlist'
-                                    : '${legoSet.name} dihapus dari Wishlist',
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                      },
-                    );
-                  },
-                ),
-            ],
+        return Title(
+          color: LegoCatalogApp.legoYellow,
+          title: '$title | LEGO COLLECTION',
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(
+                title.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              actions: [
+                if (legoSet != null)
+                  ListenableBuilder(
+                    listenable: wishlist,
+                    builder: (context, _) {
+                      final saved = wishlist.contains(legoSet.id);
+                      return IconButton(
+                        tooltip: saved
+                            ? 'Remove from Wishlist'
+                            : 'Save to Wishlist',
+                        icon: Icon(
+                          saved
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          color: saved
+                              ? LegoCatalogApp.legoRed
+                              : LegoCatalogApp.textPrimary,
+                        ),
+                        onPressed: () =>
+                            toggleWishlistWithFeedback(context, legoSet),
+                      );
+                    },
+                  ),
+              ],
+            ),
+            body: _buildBody(context, snapshot),
           ),
-          body: _buildBody(context, snapshot),
         );
       },
     );
@@ -101,71 +101,67 @@ class _SetDetailScreenState extends State<SetDetailScreen> {
 
   Widget _buildBody(BuildContext context, AsyncSnapshot<LegoSet> snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: CircularProgressIndicator(color: LegoCatalogApp.legoRed),
-      );
+      return const LegoLoadingState();
     }
     if (snapshot.hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 56, color: LegoCatalogApp.legoRed),
-              const SizedBox(height: 12),
-              Text('${snapshot.error}', textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: _retry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Coba Lagi'),
-              ),
-            ],
-          ),
-        ),
+      return LegoErrorState(
+        message: '${snapshot.error}',
+        onRetry: () => setState(_loadData),
       );
     }
 
     final legoSet = snapshot.data!;
-    final bottomPad = MediaQuery.paddingOf(context).bottom + 28;
+    final bottomPad = MediaQuery.viewPaddingOf(context).bottom + 36;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 720;
         final photoCard = _PhotoShowcaseCard(imageUrl: legoSet.imageUrl);
-        final detailsColumn = _DetailsColumn(
-          legoSet: legoSet,
-          futureRelated: _futureRelated,
-        );
+        final detailsColumn = _DetailsColumn(legoSet: legoSet);
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            isWide ? 24 : 16,
-            isWide ? 24 : 16,
-            isWide ? 24 : 16,
-            bottomPad,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
-              child: isWide
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 6, child: detailsColumn),
-                        const SizedBox(width: 22),
-                        Expanded(flex: 5, child: photoCard),
-                      ],
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        photoCard,
-                        const SizedBox(height: 14),
-                        detailsColumn,
-                      ],
+        return Scrollbar(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(bottom: bottomPad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1140),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        isWide ? 28 : 20,
+                        isWide ? 28 : 20,
+                        isWide ? 28 : 20,
+                        0,
+                      ),
+                      child: isWide
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(flex: 6, child: detailsColumn),
+                                const SizedBox(width: 32),
+                                Expanded(flex: 5, child: photoCard),
+                              ],
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                photoCard,
+                                const SizedBox(height: 22),
+                                detailsColumn,
+                              ],
+                            ),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 44),
+                _RelatedSetsCarousel(
+                  themeName: legoSet.theme,
+                  futureRelated: _futureRelated,
+                  apiService: _api,
+                ),
+              ],
             ),
           ),
         );
@@ -181,20 +177,20 @@ class _PhotoShowcaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: LegoNetworkImage(
-              url: imageUrl,
-              fit: BoxFit.contain,
-              cacheWidth: 600,
-              cacheHeight: 600,
-            ),
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: LegoCatalogApp.borderLight),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: LegoNetworkImage(
+          url: imageUrl,
+          fit: BoxFit.contain,
+          cacheWidth: 600,
+          cacheHeight: 600,
+          filterQuality: FilterQuality.medium,
         ),
       ),
     );
@@ -203,245 +199,312 @@ class _PhotoShowcaseCard extends StatelessWidget {
 
 class _DetailsColumn extends StatelessWidget {
   final LegoSet legoSet;
-  final Future<List<LegoSet>> futureRelated;
 
-  const _DetailsColumn({required this.legoSet, required this.futureRelated});
+  const _DetailsColumn({required this.legoSet});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final wishlist = WishlistStore.instance;
+    final swatch = CurrencyFormatter.themeSwatch(legoSet.themeId);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    LegoBadgePill(
-                      text: '#${legoSet.setNumber}',
-                      backgroundColor: LegoCatalogApp.legoYellowTint,
-                      textColor: LegoCatalogApp.textPrimary,
-                    ),
-                    LegoBadgePill(
-                      icon: Icons.category_outlined,
-                      text: legoSet.theme,
-                      backgroundColor: const Color(0xFFF2F2F2),
-                      textColor: const Color(0xFF4A4A4A),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  legoSet.name,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: LegoCatalogApp.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  CurrencyFormatter.toRupiah(legoSet.priceIdr),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: LegoCatalogApp.legoRed,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Expanded(
-              child: _SpecTile(
-                icon: Icons.extension_outlined,
-                label: 'Jumlah Keping',
-                value: '${CurrencyFormatter.thousands(legoSet.pieces)} pcs',
-              ),
+            LegoBadgePill(
+              text: '#${legoSet.setNumber.orPlaceholder()}',
+              backgroundColor: LegoCatalogApp.legoRed,
+              textColor: Colors.white,
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _SpecTile(
-                icon: Icons.person_outline,
-                label: 'Rating Usia',
-                value: legoSet.ageRating,
-              ),
+            LegoBadgePill(
+              text: 'AGE ${legoSet.ageRating.orPlaceholder()}',
+              backgroundColor: LegoCatalogApp.legoYellow,
+              textColor: LegoCatalogApp.textPrimary,
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _SpecTile(
-                icon: Icons.calendar_today_outlined,
-                label: 'Tahun Rilis',
-                value: '${legoSet.releaseYear}',
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _SpecTile(
-                icon: Icons.straighten_outlined,
-                label: 'Dimensi',
-                value: legoSet.dimensions,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Deskripsi Produk',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: LegoCatalogApp.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                Container(width: 10, height: 10, color: swatch),
+                const SizedBox(width: 6),
                 Text(
-                  legoSet.description,
+                  legoSet.theme.orPlaceholder().toUpperCase(),
                   style: const TextStyle(
-                    fontSize: 14.5,
-                    color: Color(0xFF333333),
-                    height: 1.55,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4,
+                    color: LegoCatalogApp.textSecondary,
                   ),
                 ),
               ],
             ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Text(
+          legoSet.name.orPlaceholder().toUpperCase(),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.6,
+            height: 1.2,
+            color: LegoCatalogApp.textPrimary,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         Text(
-          'Set Terkait di Tema ${legoSet.theme}',
+          CurrencyFormatter.toRupiah(legoSet.priceIdr),
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 20,
+            color: LegoCatalogApp.legoRed,
             fontWeight: FontWeight.w800,
+            fontFeatures: LegoCatalogApp.tabularNums,
+          ),
+        ),
+        const SizedBox(height: 20),
+        ListenableBuilder(
+          listenable: wishlist,
+          builder: (context, _) {
+            final saved = wishlist.contains(legoSet.id);
+            return OutlinedButton.icon(
+              onPressed: () => toggleWishlistWithFeedback(context, legoSet),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: saved
+                    ? LegoCatalogApp.textPrimary
+                    : Colors.white,
+                foregroundColor: saved
+                    ? Colors.white
+                    : LegoCatalogApp.textPrimary,
+                side: const BorderSide(color: LegoCatalogApp.textPrimary),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 18,
+                ),
+              ),
+              icon: Icon(
+                saved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                size: 18,
+                color: saved
+                    ? LegoCatalogApp.legoYellow
+                    : LegoCatalogApp.textPrimary,
+              ),
+              label: Text(saved ? 'SAVED IN WISHLIST' : 'SAVE TO WISHLIST'),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: LegoCatalogApp.borderLight),
+          ),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _SpecCell(
+                      label: 'TOTAL PIECES',
+                      value:
+                          '${CurrencyFormatter.thousands(legoSet.pieces)} pcs',
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 64,
+                    color: LegoCatalogApp.borderLight,
+                  ),
+                  Expanded(
+                    child: _SpecCell(
+                      label: 'AGE RATING',
+                      value: legoSet.ageRating.orPlaceholder(),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 1),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _SpecCell(
+                      label: 'RELEASE YEAR',
+                      value: '${legoSet.releaseYear}',
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 64,
+                    color: LegoCatalogApp.borderLight,
+                  ),
+                  Expanded(
+                    child: _SpecCell(
+                      label: 'DIMENSIONS',
+                      value: legoSet.dimensions.orPlaceholder(),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'PRODUCT DESCRIPTION',
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
             color: LegoCatalogApp.textPrimary,
           ),
         ),
         const SizedBox(height: 10),
-        FutureBuilder<List<LegoSet>>(
-          future: futureRelated,
-          builder: (context, relSnap) {
-            if (relSnap.connectionState == ConnectionState.waiting) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: CircularProgressIndicator(color: LegoCatalogApp.legoRed),
-                ),
-              );
-            }
-            if (relSnap.hasError) {
-              return const Text(
-                'Gagal memuat set terkait.',
-                style: TextStyle(color: LegoCatalogApp.textSecondary),
-              );
-            }
-            final related = relSnap.data ?? [];
-            if (related.isEmpty) {
-              return const Text(
-                'Tidak ada set terkait lainnya di tema ini.',
-                style: TextStyle(color: LegoCatalogApp.textSecondary),
-              );
-            }
-            return Column(
-              children: related
-                  .map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: LegoSetCard(
-                        legoSet: item,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                SetDetailScreen(setId: item.id, initialSet: item),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
+        Text(
+          legoSet.description.orPlaceholder(),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF333333),
+            height: 1.65,
+          ),
         ),
       ],
     );
   }
 }
 
-class _SpecTile extends StatelessWidget {
-  final IconData icon;
+class _SpecCell extends StatelessWidget {
   final String label;
   final String value;
 
-  const _SpecTile({required this.icon, required this.label, required this.value});
+  const _SpecCell({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: LegoCatalogApp.borderLight),
-      ),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: LegoCatalogApp.legoYellowTint,
-              borderRadius: BorderRadius.circular(8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+              color: LegoCatalogApp.textSecondary,
             ),
-            child: Icon(icon, size: 20, color: LegoCatalogApp.legoRed),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: LegoCatalogApp.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    color: LegoCatalogApp.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: LegoCatalogApp.textPrimary,
+              fontFeatures: LegoCatalogApp.tabularNums,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RelatedSetsCarousel extends StatelessWidget {
+  final String themeName;
+  final Future<List<LegoSet>> futureRelated;
+  final ApiService? apiService;
+
+  const _RelatedSetsCarousel({
+    required this.themeName,
+    required this.futureRelated,
+    this.apiService,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 1),
+        const SizedBox(height: 32),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'RELATED SETS',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.8,
+                  color: LegoCatalogApp.legoRed,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'MORE FROM ${themeName.orPlaceholder().toUpperCase()}',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.7,
+                  color: LegoCatalogApp.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        FutureBuilder<List<LegoSet>>(
+          future: futureRelated,
+          builder: (context, relSnap) {
+            if (relSnap.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 28),
+                child: LegoLoadingState(),
+              );
+            }
+            final related = relSnap.data ?? [];
+            if (related.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'No other sets available in this theme.',
+                  style: TextStyle(color: LegoCatalogApp.textSecondary),
+                ),
+              );
+            }
+            return SizedBox(
+              height: 386,
+              child: HorizontalEdgeFade(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: related.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final item = related[index];
+                    return LegoEditorialCard(
+                      legoSet: item,
+                      width: 236,
+                      expandImage: true,
+                      onTap: () =>
+                          openSetDetail(context, item, apiService: apiService),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
