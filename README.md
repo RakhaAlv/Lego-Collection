@@ -177,9 +177,3 @@ File APK hasil build akan tersimpan di `flutter_app/build/app/outputs/flutter-ap
 | `/api/image.php?set={set_number}` | Fallback proxy/cache gambar berdasarkan nomor set |
 
 ---
-
-## Troubleshooting Singkat
-
-- **Data atau gambar gagal dimuat di browser (`ClientException`):** Pastikan server PHP dijalankan dengan router lengkap `php -S 0.0.0.0:8000 -t api/public api/public/index.php` dan tekan **`Ctrl + Shift + R`** di browser untuk membersihkan cache lama.
-- **Tidak bisa terhubung dari HP fisik:** Pastikan laptop dan HP berada pada jaringan Wi-Fi yang sama, gunakan IP LAN (bukan `localhost`), dan izinkan port `8000` di Windows Firewall jika diminta.
-- **Perlu mengubah Base URL permanen tanpa `--dart-define`:** Ubah nilai `defaultValue` pada [api_config.dart](flutter_app/lib/config/api_config.dart).
