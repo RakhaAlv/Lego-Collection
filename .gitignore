@@ -1,9 +1,6 @@
-# Folder skill / agentic / tooling lokal
-.agents/
-.agent/
-.cursor/
+# IDE & Editor
 .vscode/
-skills-lock.json
+.idea/
 
 # Artefak build & cache Flutter / Dart
 build/

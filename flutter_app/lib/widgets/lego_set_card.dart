@@ -493,8 +493,8 @@ class LegoSetCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 110,
-                height: 110,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border.all(color: LegoCatalogApp.borderLight),
@@ -506,11 +506,11 @@ class LegoSetCard extends StatelessWidget {
                   cacheHeight: 240,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Row(
                       children: [
@@ -519,28 +519,31 @@ class LegoSetCard extends StatelessWidget {
                           backgroundColor: LegoCatalogApp.legoRed,
                           textColor: Colors.white,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 5),
                         LegoBadgePill(
-                          text: 'AGE ${legoSet.ageRating.orPlaceholder()}',
+                          text: legoSet.ageRating.orPlaceholder(),
                           backgroundColor: LegoCatalogApp.legoYellow,
                           textColor: LegoCatalogApp.textPrimary,
                         ),
-                        const SizedBox(width: 8),
-                        Container(width: 10, height: 10, color: swatch),
+                        const SizedBox(width: 6),
+                        Container(width: 9, height: 9, color: swatch),
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
-                            legoSet.theme.orPlaceholder().toUpperCase(),
+                            CurrencyFormatter.shortTheme(
+                              legoSet.theme.orPlaceholder(),
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.7,
+                              letterSpacing: 0.6,
                               color: LegoCatalogApp.textSecondary,
                             ),
                           ),
                         ),
+                        const SizedBox(width: 4),
                         ListenableBuilder(
                           listenable: wishlist,
                           builder: (context, _) {
@@ -549,7 +552,10 @@ class LegoSetCard extends StatelessWidget {
                               tooltip: saved ? 'Remove from Wishlist' : 'Save to Wishlist',
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              constraints: const BoxConstraints.tightFor(
+                                width: 28,
+                                height: 28,
+                              ),
                               icon: Icon(
                                 saved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                                 size: 19,
@@ -561,7 +567,7 @@ class LegoSetCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     Text(
                       legoSet.name.orPlaceholder().toUpperCase(),
                       maxLines: 2,
@@ -574,7 +580,7 @@ class LegoSetCard extends StatelessWidget {
                         height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5),
                     Text(
                       '${CurrencyFormatter.thousands(legoSet.pieces)} pcs  ·  Age ${legoSet.ageRating.orPlaceholder()}  ·  ${legoSet.releaseYear}',
                       maxLines: 1,
@@ -587,7 +593,7 @@ class LegoSetCard extends StatelessWidget {
                         fontFeatures: LegoCatalogApp.tabularNums,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       CurrencyFormatter.toRupiah(legoSet.priceIdr),
                       maxLines: 1,

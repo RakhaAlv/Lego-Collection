@@ -1,17 +1,16 @@
-# lego_catalog
+# LEGO Collection (Flutter Client)
 
-A new Flutter project.
+Client Flutter (Material 3) untuk aplikasi **LEGO COLLECTION**.
 
-## Getting Started
+Untuk panduan instalasi, arsitektur folder, daftar endpoint API PHP, dan tutorial lengkap menjalankan aplikasi (Web, Android Emulator, HP Fisik, Desktop, serta build APK), silakan lihat [README utama](../README.md).
 
-This project is a starting point for a Flutter application.
+## Perintah Cepat
 
-A few resources to get you started if this is your first Flutter project:
+Pastikan server API PHP sudah berjalan di port `8000`, lalu jalankan dari folder `flutter_app/`:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
+```

@@ -1,96 +1,185 @@
-# LETS — Aplikasi Katalog Koleksi Set LEGO
+# LEGO COLLECTION (Aplikasi Katalog Koleksi Set LEGO)
 
-Tugas Akhir Praktikum PPB 2026
+Aplikasi katalog interaktif berbasis **Flutter (Material 3)** yang terhubung dengan **Web Service REST API PHP** untuk menjelajahi 6 tema resmi dan 30 set LEGO pilihan (**Marvel**, **Disney**, **Harry Potter**, **NINJAGO**, **LEGO City**, dan **Star Wars**).
 
-| | |
+| Informasi | Detail |
 |---|---|
-| **Pengembang** | Rakha Aljiva Prabaswara |
+| **Nama Pengembang** | Rakha Aljiva Prabaswara |
 | **NIM** | 21120124140126 |
-| **Kelompok / Shift** | Kelompok 9 / Shift 02 |
-| **Client** | Flutter (Dart, Material 3, package `http`) |
-| **Web Service** | PHP REST API (JSON + proxy/cache gambar `api/image.php`) |
+| **Versi Aplikasi** | 1.0.0 |
+| **Client** | Flutter & Dart (Material 3, package `http`) |
+| **Backend API** | PHP REST API (JSON + layanan gambar lokal & CORS) |
+
+---
+
+## Fitur Utama (5 Tab + Halaman Detail)
+
+Navigasi utama berada di `MainNavigation` (`flutter_app/lib/screens/main_navigation.dart`) menggunakan *nested* `Navigator`, sehingga **Bottom Navigation Bar tetap tampil** saat pengguna membuka halaman Detail Set.
+
+1. **Home (`HomeScreen`)**
+   - *Hero banner carousel* yang bergeser otomatis setiap 4 detik (juga mendukung geser manual) untuk set unggulan.
+   - Daftar horizontal **Shop by Theme** (6 tema koleksi yang langsung memfilter tab Catalog), **Collector Edition**, **New Arrivals**, dan pintasan menuju fitur Compare.
+2. **Catalog (`SetsListScreen`)**
+   - *Grid* produk gulir vertikal responsif (2 kolom di HP, 3 di tablet, 4 di desktop).
+   - Pencarian *real-time* berdasarkan nama atau nomor set (mis. `76269`, `Castle`, `Falcon`).
+   - Filter tab tema (`ALL`, `MARVEL`, `DISNEY`, `HARRY POTTER`, `NINJAGO`, `LEGO CITY`, `STAR WARS`) dan kontrol pengurutan (*Default*, *Price: Low to High*, *Price: High to Low*, *Most Pieces*, *Newest*).
+   - Kartu preview menampilkan nomor set, *badge* rating usia (`AGE 18+`, `AGE 9+`, dll.), jumlah `pcs`, harga Rupiah, tahun rilis, dan tombol Wishlist cepat.
+3. **Compare (`CompareSetsScreen`)**
+   - Memilih 2 set (**Set A** dan **Set B**) secara berdampingan untuk membandingkan foto produk, nomor set, tema, harga, jumlah *pieces* (`pcs`), harga rata-rata per *piece* (`BEST VALUE` / `MORE PIECES`), rating usia, dan tahun rilis.
+4. **Wishlist (`WishlistScreen`)**
+   - Menyimpan set favorit dengan sinkronisasi *badge* angka di Bottom Navigation Bar secara langsung dan menghitung estimasi total harga seluruh koleksi di Wishlist.
+5. **Profile (`ProfileAboutScreen`)**
+   - Profil anggota **LEGO Insiders** (foto profil, nama lengkap, NIM) beserta ringkasan dan versi aplikasi.
+6. **Halaman Detail (`SetDetailScreen`)**
+   - Tata letak 2 kolom responsif (informasi di kiri & foto besar rasio 1:1 di kanan pada layar lebar; bertumpuk rapi di HP).
+   - Menampilkan spesifikasi lengkap (`TOTAL PIECES`, `AGE RATING`, `RELEASE YEAR`, `DIMENSIONS`), deskripsi produk, tombol `SAVE TO WISHLIST`, serta rekomendasi **Related Sets** dari tema yang sama.
+
+---
+
+## Struktur Proyek
 
 ```text
 LEGO/
-├── api/                         # Web Service REST API (PHP)
+├── api/                                # Backend Web Service REST API (PHP)
 │   ├── data/
-│   │   ├── themes.php           # seed 6 tema (Marvel, Disney, Harry Potter, NINJAGO, City, Star Wars)
-│   │   └── sets.php             # seed 30 set (5 set per tema)
-│   ├── public/                  # document root
-│   │   ├── index.php            # router JSON + header CORS
-│   │   ├── api/image.php        # proxy/cache gambar (cURL og:image + fallback GD PNG + CORS)
-│   │   ├── .htaccess            # rewrite untuk hosting Apache
-│   │   └── images/              # cache gambar PNG lokal (36 gambar)
-│   └── tools/generate_images.php
-└── flutter_app/                 # Aplikasi Flutter (5 tab + 2 halaman detail)
+│   │   ├── themes.php                  # Data 6 tema LEGO
+│   │   └── sets.php                    # Data 30 set LEGO (5 set per tema)
+│   ├── public/                         # Document root server PHP
+│   │   ├── index.php                   # Router API JSON (/api/sets, /api/themes) + CORS + statis gambar
+│   │   ├── api/image.php               # Handler cache/fallback gambar
+│   │   ├── .htaccess                   # Konfigurasi rewrite untuk Apache
+│   │   └── images/                     # Aset gambar produk (.webp / .png)
+│   └── tools/                          # Script bantu pengelolaan gambar
+├── flutter_app/                        # Aplikasi Client Flutter
+│   ├── lib/
+│   │   ├── main.dart                   # Entry point & konfigurasi ThemeData global
+│   │   ├── config/api_config.dart      # Konfigurasi Base URL API & timeout
+│   │   ├── models/                     # Model data (lego_set.dart, lego_theme.dart)
+│   │   ├── services/                   # HTTP client (api_service.dart) & state Wishlist (wishlist_store.dart)
+│   │   ├── utils/currency_formatter.dart
+│   │   ├── widgets/lego_set_card.dart  # Komponen kartu produk, badge, & pembungkus gambar
+│   │   └── screens/                    # 5 halaman tab + SetDetailScreen + MainNavigation
+│   ├── test/widget_test.dart           # Unit test & widget test (8 skenario)
+│   └── web/                            # Asset Web & loading screen (index.html, manifest.json)
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## 1. Menjalankan API PHP (Backend)
+## Prasyarat
 
-Dari root folder `LEGO/`:
+Pastikan perangkat Anda sudah terpasang:
+- **PHP 8.0+** (terdaftar di `PATH`, cek dengan `php -v`)
+- **Flutter SDK** (Dart `^3.13.3`, cek dengan `flutter doctor`)
+- Browser (Chrome/Edge) untuk menjalankan versi Web, atau Android Emulator / HP Android untuk versi mobile.
 
-```bash
-php -S 0.0.0.0:8000 -t api/public
-```
+---
 
-Untuk Flutter Web (Chrome), jalankan dengan `index.php` sebagai router agar semua endpoint
-dan `/api/image.php` melayani CORS dengan konsisten:
+## Tutorial Menjalankan Aplikasi
+
+> **Penting:** Server backend PHP **harus dijalankan terlebih dahulu** agar aplikasi Flutter dapat memuat daftar tema, set, dan gambar produk.
+
+### Langkah 1: Jalankan Backend REST API PHP
+
+Buka terminal di root folder `LEGO/`, lalu jalankan perintah berikut:
 
 ```bash
 php -S 0.0.0.0:8000 -t api/public api/public/index.php
 ```
 
-### Endpoint (`GET`)
+> Menggunakan router `api/public/index.php` di belakang perintah `php -S` wajib dilakukan agar endpoint JSON dan folder `/images/` sama-sama mengirimkan header CORS untuk Flutter Web.
 
-| Endpoint | Respons |
-|---|---|
-| `/api/sets` | `{"status":"success","data":[...]}` (30 set) |
-| `/api/sets?theme_id=1` | daftar 5 set pada tema tertentu |
-| `/api/sets/{id}` | `{"status":"success","data":{...}}` atau **404** `{"status":"error","message":"Set LEGO tidak ditemukan"}` |
-| `/api/themes` | `{"status":"success","data":[...]}` (6 tema) |
-| `/api/themes/{id}` | `{"status":"success","data":{...}}` atau **404** `{"status":"error","message":"Tema LEGO tidak ditemukan"}` |
-| `/api/image.php?set={set_number}` | cek cache `api/public/images/`; bila belum ada ambil `og:image` produk `lego.com` via cURL & simpan ke cache, dengan fallback PNG lokal + header CORS |
-| `/api/image.php?theme={theme_id}` | gambar banner tema dari cache lokal dengan header CORS |
-
-### Catatan URL per perangkat
-
-| Perangkat | Base URL |
-|---|---|
-| Emulator Android | `http://10.0.2.2:8000` (default di `lib/config/api_config.dart`) |
-| HP fisik (Wi-Fi sama) | `http://<IP-LAN-laptop>:8000` — cek dengan `ipconfig` (IPv4) |
-| Flutter Web / Windows | `http://localhost:8000` |
-| Hosting HTTPS | `https://domain-anda.com` (arahkan document root ke `api/public`) |
+Verifikasi API berjalan dengan membuka browser atau `curl`:
+- http://localhost:8000/api/themes (mengembalikan 6 tema)
+- http://localhost:8000/api/sets (mengembalikan 30 set)
 
 ---
 
-## 2. Menjalankan Aplikasi Flutter & Build APK Release
+### Langkah 2: Siapkan Dependensi Flutter
+
+Buka terminal kedua (biarkan terminal API tetap berjalan), lalu masuk ke folder `flutter_app`:
 
 ```bash
 cd flutter_app
 flutter pub get
-flutter analyze
-flutter test
-flutter run                                                     # emulator (default http://10.0.2.2:8000)
-flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000 # HP fisik
+```
+
+---
+
+### Langkah 3: Jalankan Aplikasi Flutter (Pilih Salah Satu Platform)
+
+#### A. Mode Web via Chrome (Development / Hot Reload)
+```bash
 flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
 ```
 
-Build APK release:
-
+#### B. Mode Web Production (Build Statis Port 8080)
+Build aplikasi web terlebih dahulu di folder `flutter_app/`:
 ```bash
-flutter build apk --release
-# atau dengan IP LAN / hosting custom:
-flutter build apk --release --dart-define=API_BASE_URL=http://192.168.1.10:8000
+flutter build web --dart-define=API_BASE_URL=http://localhost:8000
+```
+Lalu jalankan server statis dari folder root `LEGO/` pada terminal baru:
+```bash
+php -S 127.0.0.1:8080 -t flutter_app/build/web
+```
+Buka http://127.0.0.1:8080/ di browser.
+
+#### C. Emulator Android
+Gunakan `10.0.2.2` sebagai alamat `localhost` komputer host dari dalam Android Emulator:
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 ```
 
-### Fitur Utama
+#### D. HP Fisik Android (Dalam Satu Wi-Fi)
+1. Cek alamat IPv4 komputer Anda melalui `ipconfig` (Windows) atau `ifconfig` (macOS/Linux), misalnya `192.168.1.10`.
+2. Jalankan aplikasi dengan IP tersebut:
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000
+```
 
-- **AppBar ala katalog `lego.com`** dengan logo resmi LEGO di sisi kiri (`Image.network` + fallback) dan tema terang (`#F7F7F7`, kartu putih berborder, aksen kuning `#F6C90E` & merah `#D01012`).
-- **5 Tab `NavigationBar` (`IndexedStack`):**
-  1. **Sets (`SetsListScreen`)** — 30 set, pencarian, filter 6 tema, opsi *sort* (harga, pieces, tahun), tombol wishlist cepat, & pull-to-refresh → `SetDetailScreen`.
-  2. **Themes (`ThemesListScreen`)** — 6 tema LEGO → `ThemeDetailScreen` lengkap dengan daftar set pada tema tersebut.
-  3. **Featured (`FeaturedSetsScreen`)** — kurasi set unggulan (`Semua Unggulan`, `Edisi 18+`, `Pieces Terbanyak`, `Rilis Terbaru`) → `SetDetailScreen`.
-  4. **Wishlist (`WishlistScreen`)** — koleksi favorit pengguna beserta estimasi total harga Rupiah & badge jumlah tab → `SetDetailScreen`.
-  5. **Profile (`ProfileAboutScreen`)** — profil pengembang (**Rakha Aljiva Prabaswara**, NIM **21120124140126**, **Kelompok 9 / Shift 02**), statistik katalog & wishlist, info API, dan versi **1.0.0**.
+#### E. Windows Desktop
+```bash
+flutter run -d windows --dart-define=API_BASE_URL=http://localhost:8000
+```
+
+---
+
+## Pengujian & Build APK Release
+
+Jalankan seluruh perintah ini dari dalam folder `flutter_app/`:
+
+```bash
+# 1. Cek static analysis kode Dart
+flutter analyze
+
+# 2. Jalankan 8 unit test & widget test
+flutter test
+
+# 3. Build APK Android release (sesuaikan API_BASE_URL dengan IP server / hosting Anda)
+flutter build apk --release --dart-define=API_BASE_URL=http://10.0.2.2:8000
+```
+
+File APK hasil build akan tersimpan di `flutter_app/build/app/outputs/flutter-apk/app-release.apk`.
+
+---
+
+## Daftar Endpoint API (`GET`)
+
+| Endpoint | Keterangan |
+|---|---|
+| `/api/sets` | Mengambil seluruh 30 set LEGO (`{"status":"success","data":[...]}`) |
+| `/api/sets?theme_id=1` | Memfilter set berdasarkan ID tema (`1` s.d. `6`) |
+| `/api/sets/{id}` | Mengambil detail 1 set LEGO, atau HTTP `404` jika ID tidak ditemukan |
+| `/api/themes` | Mengambil daftar seluruh 6 tema koleksi LEGO |
+| `/api/themes/{id}` | Mengambil detail 1 tema LEGO, atau HTTP `404` jika ID tidak ditemukan |
+| `/images/{file}` | Mengambil file foto produk langsung dari `api/public/images/` dengan header CORS |
+| `/api/image.php?set={set_number}` | Fallback proxy/cache gambar berdasarkan nomor set |
+
+---
+
+## Troubleshooting Singkat
+
+- **Data atau gambar gagal dimuat di browser (`ClientException`):** Pastikan server PHP dijalankan dengan router lengkap `php -S 0.0.0.0:8000 -t api/public api/public/index.php` dan tekan **`Ctrl + Shift + R`** di browser untuk membersihkan cache lama.
+- **Tidak bisa terhubung dari HP fisik:** Pastikan laptop dan HP berada pada jaringan Wi-Fi yang sama, gunakan IP LAN (bukan `localhost`), dan izinkan port `8000` di Windows Firewall jika diminta.
+- **Perlu mengubah Base URL permanen tanpa `--dart-define`:** Ubah nilai `defaultValue` pada [api_config.dart](flutter_app/lib/config/api_config.dart).

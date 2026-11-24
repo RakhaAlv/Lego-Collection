@@ -95,8 +95,13 @@ class _SetsListScreenState extends State<SetsListScreen> {
   Future<void> _reload() async {
     HapticFeedback.selectionClick();
     final nextFuture = _api.fetchSets(themeId: _selectedThemeId);
-    setState(() => _futureSets = nextFuture);
-    if (_themes.isEmpty) _loadThemes();
+    if (!mounted) return;
+    setState(() {
+      _futureSets = nextFuture;
+    });
+    if (_themes.isEmpty) {
+      await _loadThemes();
+    }
     await nextFuture;
   }
 

@@ -8,6 +8,7 @@ import 'package:lego_catalog/screens/main_navigation.dart';
 import 'package:lego_catalog/screens/profile_about_screen.dart';
 import 'package:lego_catalog/screens/set_detail_screen.dart';
 import 'package:lego_catalog/screens/sets_list_screen.dart';
+import 'package:lego_catalog/screens/wishlist_screen.dart';
 import 'package:lego_catalog/services/api_service.dart';
 import 'package:lego_catalog/services/wishlist_store.dart';
 import 'package:lego_catalog/utils/currency_formatter.dart';
@@ -219,5 +220,60 @@ void main() {
               ProfileAboutScreen.profileAvatarUrl,
     );
     expect(avatarFinder, findsOneWidget);
+  });
+
+  testWidgets('WishlistScreen renders 2-line titles on 360px mobile width without overflow',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      WishlistStore.instance.clear();
+    });
+
+    final store = WishlistStore.instance;
+    store.clear();
+    store.toggle(
+      const LegoSet(
+        id: 5,
+        themeId: 1,
+        setNumber: '76321',
+        name: 'Spider-Man vs. Doc Ock Subway Train Scene',
+        theme: 'LEGO Marvel',
+        pieces: 393,
+        ageRating: '9+',
+        releaseYear: 2025,
+        dimensions: '8 cm x 23 cm x 5 cm',
+        priceIdr: 859000,
+        imageUrl: 'http://localhost:8000/images/76321.webp',
+        description: 'Classic subway showdown.',
+      ),
+    );
+    store.toggle(
+      const LegoSet(
+        id: 14,
+        themeId: 3,
+        setNumber: '76460',
+        name: 'Hogwarts Castle: Sorting Hat Ceremony',
+        theme: 'LEGO Harry Potter',
+        pieces: 124,
+        ageRating: '7+',
+        releaseYear: 2026,
+        dimensions: '10 cm x 14 cm x 8 cm',
+        priceIdr: 329000,
+        imageUrl: 'http://localhost:8000/images/76460.webp',
+        description: 'Great Hall ceremony vignette.',
+      ),
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: WishlistScreen()));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('MARVEL'), findsOneWidget);
+    expect(find.text('HARRY POTTER'), findsOneWidget);
+    expect(find.text('Rp 859.000'), findsOneWidget);
+    expect(find.text('Rp 329.000'), findsOneWidget);
   });
 }

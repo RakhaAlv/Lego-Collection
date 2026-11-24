@@ -160,19 +160,16 @@ class WishlistScreen extends StatelessWidget {
               Expanded(
                 child: Scrollbar(
                   controller: scrollController,
-                  child: ListView.builder(
+                  child: ListView.separated(
                     controller: scrollController,
                     padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad),
-                    itemExtent: 158,
                     itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final setItem = items[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: LegoSetCard(
-                          legoSet: setItem,
-                          onTap: () => openSetDetail(context, setItem),
-                        ),
+                      return LegoSetCard(
+                        legoSet: setItem,
+                        onTap: () => openSetDetail(context, setItem),
                       );
                     },
                   ),

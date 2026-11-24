@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (collectorSets.isNotEmpty) ...[
               const SizedBox(height: 48),
               _EditorialSectionHeader(
-                eyebrow: 'FEATURED CURATION',
+                eyebrow: 'FEATURED SETS',
                 title: 'COLLECTOR EDITION',
                 actionLabel: 'VIEW ALL',
                 onAction: widget.onOpenCatalog == null
