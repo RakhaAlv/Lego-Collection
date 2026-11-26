@@ -2,7 +2,7 @@
 // REST API utama LEGO Collection: melayani data tema/set JSON serta gambar statis.
 
 declare(strict_types=1);
-
+require __DIR__ . '/public/index.php';
 $reqPath = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
 
 if (preg_match('#/api/image\.php$#', $reqPath)) {
