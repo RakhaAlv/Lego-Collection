@@ -1,5 +1,4 @@
 <?php
-// Data 6 tema LEGO; path gambar lokal dilengkapi menjadi URL absolut di index.php.
 
 return [
     [

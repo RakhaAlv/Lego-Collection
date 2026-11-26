@@ -1,5 +1,4 @@
 <?php
-// Data 30 set LEGO (6 tema x 5 set); path gambar dilengkapi otomatis di index.php.
 
 return [
     // LEGO Marvel
