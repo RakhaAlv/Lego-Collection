@@ -10,27 +10,32 @@ if (preg_match('#/api/image\.php$#', $reqPath)) {
 }
 
 // Layani file gambar lokal di /images dengan header CORS agar bisa dimuat di Flutter Web.
-if (PHP_SAPI === 'cli-server') {
-    $staticFile = realpath(__DIR__ . $reqPath);
-    $imagesDir  = realpath(__DIR__ . '/images');
-    if ($staticFile && $imagesDir && str_starts_with($staticFile, $imagesDir . DIRECTORY_SEPARATOR) && is_file($staticFile)) {
-        $mime = [
-            'png'  => 'image/png',
-            'jpg'  => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'webp' => 'image/webp',
-        ];
-        $ext = strtolower(pathinfo($staticFile, PATHINFO_EXTENSION));
-        header('Content-Type: ' . ($mime[$ext] ?? 'application/octet-stream'));
-        header('Access-Control-Allow-Origin: *');
-        header('Cache-Control: public, max-age=86400');
-        header('Content-Length: ' . filesize($staticFile));
-        readfile($staticFile);
+$staticFile = realpath(__DIR__ . $reqPath);
+$imagesDir  = realpath(__DIR__ . '/images');
+if ($staticFile && $imagesDir && str_starts_with($staticFile, $imagesDir . DIRECTORY_SEPARATOR) && is_file($staticFile)) {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+        http_response_code(200);
         exit;
     }
-    if ($reqPath !== '/' && is_file(__DIR__ . $reqPath)) {
-        return false;
-    }
+    $mime = [
+        'png'  => 'image/png',
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'webp' => 'image/webp',
+    ];
+    $ext = strtolower(pathinfo($staticFile, PATHINFO_EXTENSION));
+    header('Content-Type: ' . ($mime[$ext] ?? 'application/octet-stream'));
+    header('Cache-Control: public, max-age=86400');
+    header('Content-Length: ' . filesize($staticFile));
+    readfile($staticFile);
+    exit;
+}
+
+if (PHP_SAPI === 'cli-server' && $reqPath !== '/' && is_file(__DIR__ . $reqPath)) {
+    return false;
 }
 
 // Set header JSON dan izinkan akses lintas domain (CORS) untuk Flutter client.
@@ -61,6 +66,9 @@ function base_url(): string
     $host   = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
     $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/');
     $dir    = preg_match('#^(.*)/index\.php$#', $script, $m) ? $m[1] : '';
+    if (getenv('VERCEL') !== false || $dir === '/api') {
+        $dir = '';
+    }
     return $scheme . '://' . $host . $dir;
 }
 
